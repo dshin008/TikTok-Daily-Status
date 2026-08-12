@@ -1,0 +1,5 @@
+Working_Queries/_tt_link_refresh/
+.DS_Store
+.tmp_analysis/
+*.pyc
+__pycache__/
