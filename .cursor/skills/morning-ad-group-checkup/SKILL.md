@@ -18,7 +18,7 @@ description: >
   ❌ Do NOT use for: weekly exec memos (use weekly-account-business-review); creative
   retire/scale/rotate plans (use creative-fatigue-rotation-planner); executing budget/bid/pause
   changes (use ad-group-optimizer or manage-campaign). This skill never writes.
-version: 2.6.0
+version: 2.7.0
 ---
 
 # Morning Ad Group Checkup (read-only)
@@ -89,7 +89,9 @@ Stage 6: score + classify ad groups → Check Today / Watch / Healthy (funnel-aw
 Stage 6B (🔴 groups only): ad-level CTR/ATC gap check (Signal E) — pull ad-level TikTok CTR +
   ad-level BigQuery ATC rate for each 🔴 group's top-spend ads, flag any single ad with healthy
   clicks but near-zero carts
-Stage 7: render morning memo + prioritized check-up queue
+Stage 7: render morning memo + prioritized check-up queue (table format, for LATEST.md only)
+Stage 7B: if posting to Slack, re-render using the laddered-bullet template — never the
+  Stage 7 table (Slack has no table support)
 Stage 8: archive the current LATEST.md into past-reports/, then save today's memo as the new
   Documents/TikTok-Daily-Status/LATEST.md
 ```
@@ -506,7 +508,11 @@ landing page, or a campaign-level setting change), not {N} separate issues."* Th
 live on 2026-08-07: 8 of 9 confirmed 🔴 groups shared the `Evergreen VSA Broad Web LF/FF` campaign
 pair, which is a materially different story than 9 scattered problems.
 
-## STAGE 7 — Render morning memo
+## STAGE 7 — Render morning memo (for `LATEST.md` only — never send this table to Slack)
+
+**This table format is for the saved file only.** GitHub/markdown viewers render `|` tables
+correctly; Slack does not — it prints the raw pipe characters as text. **When the destination is
+Slack, use STAGE 7B instead, not this template.**
 
 ```
 ☀️ Morning Ad Group Checkup — {advertiser_name} ({advertiser_id}) · {currency}
@@ -564,6 +570,63 @@ Do next (prioritized)
 ```
 
 If every bucket is empty, say so honestly and still show account pulse + skipped counts.
+
+## STAGE 7B — Slack-safe render (separate template — no tables, ever)
+
+**Why this exists:** Slack has no markdown table support. Sending Stage 7's `| Ad group |
+Campaign | … |` table to Slack produces literal pipe characters as a wall of text, not columns
+— confirmed live 2026-08-12, where the LATEST.md table was pasted verbatim into a Slack message
+and came out unreadable. **Whenever the destination is Slack (a channel or a DM), use this
+laddered-bullet template instead. Never use the Stage 7 table in a Slack message, under any
+circumstance.**
+
+Use Slack's own text style (called "mrkdwn") only: `*bold*`, `_italic_`, `` `inline code` ``, and
+plain `-` or numbered lines for lists. No `|` characters as table syntax, no HTML.
+
+```
+☀️ *Morning Ad Group Checkup — {advertiser_name}* · {today's date}
+
+*{N} ad groups need a check today* · ${spend_needing_attention} spent there yesterday
+
+Account pulse: spend {y} vs 7d avg {avg} ({▲/▼X%}) · CTR {y}% vs 7d avg {avg}% ({▲/▼X%})
+
+{one line per cluster, only if Stage 6's campaign-clustering check fired — e.g. "4 flags cluster
+on Evergreen VSA Broad Web LF — likely one shared cause, not 4 separate issues."}
+
+*🔴 Check today* (top 10 by spend)
+1. *{ad_group}* — {campaign} · {funnel} · ${spend}
+   {reason codes / why, one short clause}
+   {one sub-line per Signal E hit on this group: "   ⚠️ ad: “{ad_name}” — CTR {x}% (normal) but
+   ATC {y}% vs group {z}% — check this ad's product link/stock."}
+2. *{ad_group}* — …
+…
+{if N > 10: "+{N-10} more 🔴 — full list in LATEST.md"}
+
+*🟡 Watch* ({N}): {ad_group} ({reason}, ${spend}), {ad_group} ({reason}, ${spend}), … — one
+flowing comma-separated line (or two, if long), never a numbered list or table
+
+*Do next*
+1. {action}
+2. {action}
+…
+
+Full memo saved to LATEST.md in repo.
+```
+
+**Formatting rules — follow exactly:**
+- 🔴 groups are a **numbered list**, one ad group per number — never a table row.
+- Signal E ad-level flags are **sub-lines indented with 3 spaces + ⚠️**, sitting directly under
+  their ad group's number — never their own numbered item, never promoted to the main list.
+- 🟡 Watch is **one condensed, comma-separated line** (or two if the list is long) — not a
+  numbered list, not a table.
+- Keep the whole message to roughly **40 lines or fewer**. If the 🔴 list alone would exceed that,
+  cut to the top 6-8 by spend and lean harder on the "+{N} more — full list in LATEST.md" line
+  rather than trying to fit everything.
+- **Never wrap the message (or the 🔴 list) in a triple-backtick code block** to try to preserve
+  table alignment — that was tried and still rendered badly at this row count. If any field needs
+  monospacing, use inline `` `code` `` on that one field only, not the whole message.
+- If unsure whether a given post target is Slack, default to this template (STAGE 7B) — it also
+  reads fine pasted into chat, unlike the table.
 
 ## STAGE 8 — Save the report (LATEST.md + archive)
 
