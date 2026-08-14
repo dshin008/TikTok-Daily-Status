@@ -121,8 +121,8 @@ Assumptions & limits
   · This skill changes nothing in Ads Manager or BigQuery.
 
 Do next (prioritized)
-  1. [Today] Open 🔴 Halloween_Creator_VC_FF in Ads Manager → check destination URL(s) first (product exists, matches ad, in stock) — VTC/link-risk flags
-  2. [Today] Same link/stock audit on other VTC-flagged Sparks (Rugs/Chairs/Couches/ShoeStorage/Bed) — shared Evergreen VSA cause likely
+  1. [Today] Open 🔴 Spark_Rugs_Broad_LF in Ads Manager → check destination URL(s) first (product exists, matches ad, in stock) — VTC/link-risk flags
+  2. [Today] Same link/stock audit on other VTC-flagged Sparks (Chairs/Couches/ShoeStorage/Bed) — shared Evergreen VSA cause likely
   3. [Today] Halloween_Creator_VC_FF — 2-day CTR collapse; check delivery/audience then possible creative refresh → creative associate
   4. [Today] Spark_Chairs_Broad_LF — sustained low ATC vs LF peers; confirm bid/budget/targeting before creative
   5. [Today] Spark_Sideboard_Broad_FF — spend-drop vs 7d avg; verify budget/bid/delivery in Ads Manager
