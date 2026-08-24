@@ -17,51 +17,51 @@ Campaign clustering
   | Ad group | Campaign | Funnel | Why | Yesterday spend |
   |---|---|---|---|---|
   | Halloween_Creator_VC_FF | Halloween View Content FF | Mid | ctr-collapse — CTR 2.28% & day-before 2.30% both <70% of 7d 3.94% | $2,404 |
-  | Spark_Chairs_Broad_LF | Evergreen VSA Broad Web LF | Low | atc-decay, vtc-decay, low-vtc — atc_rate 0.58% vs 14d 1.14% — 3/3 days below; VTC 1.1% vs 14d 2.3% — 3/3 days below; check product link/sto… | $1,341 |
-  | Spark_ShoeStorage_Broad_LF | Evergreen VSA Broad Web LF | Low | atc-decay, vtc-decay, low-vtc — atc_rate 2/3 days below 14d 1.98%; VTC 2.6% vs 14d 7.9% — 3/3 days below; check product link/stock; VTC 2.6… | $981 |
-  | ↳ ⚠️ ad-level: `A no shoe household might sound strict, but honestly it just keeps eve` — CTR 0.98% (normal) but ATC rate 0.3% vs group's 1.29% — check this ad's product link/stock. | | | | |
+  | Spark_Chairs_Broad_LF | Evergreen VSA Broad Web LF | Low | atc-decay, vtc-decay, low-vtc — atc_rate 0.58% vs 14d 1.14% — 3/3 days below; VTC 1.1% vs 14d 2.3% — 3/3 days… | $1,341 |
+  | Spark_ShoeStorage_Broad_LF | Evergreen VSA Broad Web LF | Low | atc-decay, vtc-decay, low-vtc, ad-link-risk — atc_rate 1.32% vs 14d 1.98% — 2/3 days below; VTC 2.6% vs 14d 7… | $981 |
+  | ↳ ⚠️ ad-level: `A no shoe household might sound strict, but honestly it just keeps eve` — CTR 0.98% (normal) but ATC rate 0.30% vs group's 1.29% — check this ad's product link/stock. | | | | |
   | ↳ ⚠️ ad-level: `Gifted by Wayfair ✨ If your entryway slowly turns into a pile of sneak` — CTR 0.91% (normal) but ATC rate 0.17% vs group's 1.29% — check this ad's product link/stock. | | | | |
   | verified_creator_boosted_vca_FF | Verified View Content A FF | Mid | ctr-collapse — CTR 2.58% & day-before 2.86% both <70% of 7d 4.70% | $886 |
   | TT_BTS_CLP_VC_FF | [18-24] BTS View Content FF | Mid | ctr-collapse — CTR 1.99% & day-before 2.42% both <70% of 7d 4.01% | $874 |
-  | BTS_CLP_VSA_FF | [18-24] BTS VSA FF | Low | atc-decay — atc_rate 0.06% vs 14d 0.14% — 3/3 days below | $740 |
-  | ↳ ⚠️ ad-level: `#WayfairPartner Creating a space that feels more like me with @Wayfair` — CTR 1.04% (normal) but ATC rate 0.0% vs group's 0.06% — check this ad's product link/stock. | | | | |
-  | ↳ ⚠️ ad-level: `#WayfairPartner No one prepares you for the specific things you need o` — CTR 1.09% (normal) but ATC rate 0.0% vs group's 0.06% — check this ad's product link/stock. | | | | |
-  | Spark_Chairs_Broad_FF | Evergreen VSA Broad Web FF | Low | ctr-collapse, atc-decay, vtc-decay, low-vtc — CTR 1.20% & day-before 1.19% both <70% of 7d 1.82%; atc_rate 1.15% vs 14d 2.72% — 3/3 days below; VTC 2.3% … | $653 |
+  | BTS_CLP_VSA_FF | [18-24] BTS VSA FF | Low | atc-decay, ad-link-risk — atc_rate 0.06% vs 14d 0.14% — 3/3 days below | $740 |
+  | ↳ ⚠️ ad-level: `#WayfairPartner Creating a space that feels more like me with @Wayfair` — CTR 1.04% (normal) but ATC rate 0.00% vs group's 0.06% — check this ad's product link/stock. | | | | |
+  | ↳ ⚠️ ad-level: `#WayfairPartner No one prepares you for the specific things you need o` — CTR 1.09% (normal) but ATC rate 0.00% vs group's 0.06% — check this ad's product link/stock. | | | | |
+  | Spark_Chairs_Broad_FF | Evergreen VSA Broad Web FF | Low | ctr-collapse, atc-decay, vtc-decay, low-vtc, ad-link-risk — CTR 1.20% & day-before 1.19% both <70% of 7d 1.82… | $653 |
   | ↳ ⚠️ ad-level: `Never leaving my Nancy Meyers striped swivel chairs. The perfect addit` — CTR 2.11% (normal) but ATC rate 0.29% vs group's 1.14% — check this ad's product link/stock. | | | | |
-  | Spark_BedroomFurniture_Broad_LF | Evergreen VSA Broad Web LF | Low | atc-decay, vtc-decay, low-vtc — atc_rate 2/3 days below 14d 1.33%; VTC 1.3% vs peer median 5.1% — 3/3 days below; check product link/stock | $614 |
+  | Spark_BedroomFurniture_Broad_LF | Evergreen VSA Broad Web LF | Low | atc-decay, vtc-decay, low-vtc, ad-link-risk — atc_rate 0.80% vs 14d 1.33% — 2/3 days below; VTC 1.3% vs 14d 2… | $614 |
   | ↳ ⚠️ ad-level: `these modern neutral night stands are so good!  🔗 in my bio in linktre` — CTR 1.22% (normal) but ATC rate 0.39% vs group's 0.81% — check this ad's product link/stock. | | | | |
-  | ↳ ⚠️ ad-level: `Bedroom makeover starts here let’s unbox my New Night stands with me! ` — CTR 1.28% (normal) but ATC rate 0.0% vs group's 0.81% — check this ad's product link/stock. | | | | |
-  | Spark_Couches_Broad_2_FF | Evergreen VSA Broad Web FF | Low | low-vtc — VTC 2.2% vs peer median 5.1% — 3/3 days below; check product link/stock | $543 |
+  | ↳ ⚠️ ad-level: `Bedroom makeover starts here let’s unbox my New Night stands with me! ` — CTR 1.28% (normal) but ATC rate 0.00% vs group's 0.81% — check this ad's product link/stock. | | | | |
+  | Spark_Couches_Broad_2_FF | Evergreen VSA Broad Web FF | Low | low-vtc — VTC 2.2% vs LF peer median 5.1% — 3/3 days below | $543 |
   | Tailgating_Internal_VC_FF | GTM View Content FF | Mid | ctr-collapse — CTR 2.75% & day-before 2.71% both <70% of 7d 4.85% | $359 |
   +6 more 🔴 — full list available on request.
-  · Spark_Verified_Broad_LF (Low, $300) — atc-decay, vtc-decay
-  · Spark_BedroomFurniture_Broad_FF (Low, $298) — vtc-decay, low-vtc
+  · Spark_Verified_Broad_LF (Low, $300) — atc-decay, vtc-decay, ad-link-risk
+  · Spark_BedroomFurniture_Broad_FF (Low, $298) — vtc-decay, low-vtc, ad-link-risk
   · BTS26_Parents_Partnerships_VC_FF (Mid, $241) — pdp-decay
   · CrashTest_Q3_VCA_FF (Mid, $174) — spend-drop, pdp-decay
-  · GTM_Parents_BTS_VSA_CLP_FF (Low, $166) — atc-decay, low-atc
+  · GTM_Parents_BTS_VSA_CLP_FF (Low, $166) — atc-decay
   · FallRefresh_Internal_VC_FF (Mid, $107) — pdp-decay
 
-🟡 Watch (26) — condensed; ad group names + reason codes only unless asked for detail
+🟡 Watch (11) — condensed; ad group names + reason codes only unless asked for detail
   · Spark_Bed_Broad_LF (Low, $1,988) — vtc-decay
   · BTS_CLP_VSA_LF (Low, $1,476) — atc-decay, vtc-decay
   · Spark_Couches_Broad_2_LF (Low, $1,320) — low-vtc
   · Spark_Rugs_Broad_LF (Low, $1,309) — atc-decay, low-vtc
   · Spark_Bed_Broad_FF (Low, $873) — vtc-decay
   · Spark_Stools_Broad_FF (Low, $440) — vtc-decay, low-vtc
-  · GTM_Parents_BTS_VSA_CLP_LF (Low, $341) — atc-decay, low-atc
+  · GTM_Parents_BTS_VSA_CLP_LF (Low, $341) — atc-decay
   · BTS_Creator_VSA_LF (Low, $200) — atc-decay
   · FallRefresh_Creator_VC_FF (Mid, $110) — ctr-collapse, pdp-decay
-  · Spark_ViralTrends_Broad_FF (Low, $108) — atc-decay, low-atc
+  · Spark_ViralTrends_Broad_FF (Low, $108) — atc-decay
   · BTS26_Parents_Creator_VC_FF (Mid, $74) — pdp-decay
-  · +15 paused/zero-spend watches (historical decay still visible in settled BQ) — skip unless re-enabling
+  · +8 paused/zero-spend watches (historical decay still visible in settled BQ) — skip unless re-enabling
 
-✅ Healthy / skipped (29 healthy · 613 below floor or no triggers)
+✅ Healthy / skipped (501 below floor or no triggers)
 
 Spend on 🔴 groups yesterday: $10,684
 
 Data quality
   · BigQuery join (Mid/Low with material yesterday spend): 49 id-matched · 0 name-matched · 0 no-match
-  · Peer set: LF n=72 (med ATC 0.11%) · MF n=49 (med PDP 0.32%) · UF n=7 (med 6s VTR 1.59%)
+  · Peer set: LF n=36 (med ATC 1.49%) · MF n=14 (med PDP 0.59%) · UF n=7 (med 6s VTR 1.59%)
 
 Notes for creative associate (if any)
   · Halloween_Creator_VC_FF — possible creative-driven CTR decay; not a rotation plan.
