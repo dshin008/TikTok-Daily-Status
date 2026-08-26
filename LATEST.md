@@ -5,7 +5,7 @@ HEADLINE: 15 ad groups need a check today; $10,323 spent there yesterday (top 5 
 
 Account pulse (yesterday vs 7-day daily avg, TikTok-native)
   Spend        $59,516     vs avg $50,722     ▲ 17%
-  CTR          0.00%      vs avg 0.00%     ▼ 4%
+  CTR          1.13%      vs avg 1.18%     ▼ 4%
   By funnel: Upper 95 groups · Mid 171 groups · Low 425 groups (3 excluded: LEAD_GENERATION; 6 unresolved WEB_CONVERSIONS)
 
 🔴 Check today (15 ad groups, showing top 5 by spend)
