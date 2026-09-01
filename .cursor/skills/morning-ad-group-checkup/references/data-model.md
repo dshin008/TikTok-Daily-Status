@@ -98,10 +98,10 @@ ad groups with full 3-day data captured, while every one of the 7 was a real, su
 (verified spot-check: e.g. Spark_Bed_Broad_LF's ATC rate was 1.57%, 1.77%, 1.70% across Aug 3-5,
 all below its 2.59% baseline — a real pattern, not a blip).
 
-Same trend-persistence principle applies to Signal B (spend-drop, CTR-collapse): require the
-anomaly on **both** yesterday and the day before to escalate to 🔴; a single bad day is 🟡 at most.
-Delivery halt (`operation_status = ENABLE` with $0 spend) is the one exception — it's acute and
-real the moment it happens, so it goes straight to 🔴 without waiting for a second day.
+Same trend-persistence principle applies to Signal B **CTR-collapse** only. **Spend-drop does
+not flag** (intentional budget cuts — confirmed 2026-08-24). Delivery halt (`operation_status =
+ENABLE` with $0 spend) is the one spend-related exception — acute non-delivery goes straight to
+🔴 without waiting for a second day.
 
 ## Sustained low absolute performance vs funnel peers (Signal C — added 2026-08-10)
 
@@ -132,49 +132,21 @@ Reason codes: `low-vtr`, `low-pdp`, `low-atc`, `low-ctr` (no-match CTR-only fall
 Signal A (decay), Signal B (yesterday anomaly), and Signal C (sustained low vs peers) are
 **independent** — list all applicable codes in the memo.
 
-## Broken link / OOS risk — VTC drop (Signal D) and ad-level CTR/ATC gap (Signal E) (added 2026-08-11)
+## VTC / Signal D+E scope (hardened 2026-08-24)
 
-**Problem neither Signal A/B/C fully names:** ATC Rate (`ATCs / visits`) blends two separate
-steps — click quality (did the ad get someone to the site at all) and product-page conversion
-(did they cart once they saw the product). A wrong product link or an out-of-stock item breaks
-specifically the second step, but a plain ATC-rate decay flag doesn't say *why* — the analyst
-still has to guess whether it's creative fatigue, targeting drift, or a broken link. User
-confirmed live 2026-08-07: `Spark_Bed_Broad_LF` was linking to a **sofa** product page — visits
-and PDP views were normal, ATC rate collapsed. Isolating the PDP→cart step directly (VTC) points
-straight at the likely cause instead of leaving it ambiguous.
+VTC (`ATCs / PDP_views`) is a **supporting** metric only.
 
-**Signal D — VTC rate, ad-group level.** `VTC = ATCs / PDP_views`. Both fields are already
-returned by the standard Mid/Low `tbl_dash_visits` query (see SQL above) — this is a zero-cost
-derived metric, not a new pull. Apply the same two checks used elsewhere in this skill:
+| Rule | Required behavior |
+|---|---|
+| VTC-only soft | **🟡 Watch** — never 🔴 |
+| VTC + primary 🔴 | Stay 🔴; VTC clause **after** primary Why |
+| "check product link/stock" | Banned as default Why / Signal E / Do-next copy |
+| Signal E | Only on A/B/C 🔴; ≤2 Slack sub-lines; no link/stock suffix |
 
-| Check | Threshold | Verdict |
-|---|---|---|
-| Decay vs own 14d baseline VTC | `< baseline_vtc × 0.75` on 3-of-3 recent settled days | 🔴 eligible |
-| Decay vs own 14d baseline VTC | 2-of-3 days | 🟡 only |
-| Sustained low vs funnel peer median VTC | `< funnel_peer_median_vtc × 0.75` on 3-of-3 days | 🔴 eligible |
-| Sustained low vs funnel peer median VTC | 2-of-3 days | 🟡 only |
+Pre-publish scrub: any 🔴 without a primary code (`atc-*`/`low-atc`/`pdp-*`/`low-pdp`/`vtr-*`/
+`low-vtr`/`ctr-collapse`/`delivery-halt`) → demote. Never flag on spend-drop alone (budget cuts).
 
-Data floor: baseline `PDP_views ≥ 100`, else mark `low-confidence` and skip Signal D for that ad
-group. Reason codes: `vtc-decay`, `low-vtc`.
-
-**Signal E — ad-level CTR/ATC gap, 🔴 groups only.** The user's second confirmed pattern: one ad
-inside an otherwise-fine ad group gets clicks (interest is real) but produces almost no carts
-from that ad specifically — a group-level average can hide this if the group's other ads are
-fine. This is scoped to ad groups **already 🔴** from Signals A–D to avoid multiplying API calls
-across every ad group in the account (this account has 300+ live ads — auditing all of them
-individually every morning would blow the 2-4 minute runtime target for a check that's rarely
-useful on healthy groups).
-
-Procedure: pull ad-level TikTok CTR (`report_integrated_get`, `data_level: AUCTION_AD`,
-`dimensions: ["ad_id"]`, filtered to the 🔴 ad group's `adgroup_id`) and ad-level BigQuery ATC
-rate (extend the standard visits query with the `ad_id` regex extraction below, grouped by
-`ad_id`), same recent settled window as the rest of the run. Flag an ad when its CTR is `≥` the
-ad group's own average CTR `× 0.85` **and** its ad-level ATC rate is `<` the ad group's overall
-ATC rate `× 0.50`, with `clicks ≥ 30` to filter out noise. Cap to top 3 offending ads per group
-by spend. Reason code: `ad-link-risk`. Never promotes a bucket by itself — see Signal E's own
-section in `SKILL.md` for the full rule.
-
-### SQL: ad-level ATC rate (for Signal E, 🔴 groups only)
+### SQL: ad-level ATC rate (for Signal E, 🔴-from-primary groups only)
 
 Same source and `cmcode` filter as the standard Mid/Low query, but extract **`ad_id`** instead
 of (or in addition to) `adgroup_id`, and group by `ad_id`. Scope to a specific ad group by

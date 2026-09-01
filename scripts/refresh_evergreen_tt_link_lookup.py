@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import ssl
 import subprocess
 import sys
@@ -27,6 +28,10 @@ import urllib.parse
 import urllib.request
 from datetime import date
 from pathlib import Path
+
+# Internal / non-Spark ads often bake a TikTok post id into the ad name, e.g.
+# 7665006576323051528_socialcut_makesense_lambco_social_vc_FF
+AD_NAME_ITEM_ID_RE = re.compile(r"^(\d{15,25})(?:_|$)")
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / "Working_Queries"
@@ -178,6 +183,12 @@ def _iter_ad_objects(payload) -> list[dict]:
     return []
 
 
+def extract_item_id_from_ad_name(name: str) -> str:
+    """Pull a TikTok post id when the ad name starts with one (Internal naming pattern)."""
+    m = AD_NAME_ITEM_ID_RE.match((name or "").strip())
+    return m.group(1) if m else ""
+
+
 def load_item_ids_from_ads_json() -> dict[str, dict]:
     ADS_DIR.mkdir(parents=True, exist_ok=True)
     files = sorted(ADS_DIR.glob("*.json"))
@@ -219,9 +230,20 @@ def build_lookup(ads_csv: Path, master_csv: Path, item_map: dict[str, dict]) -> 
     evergreen = list(csv.DictReader(ads_csv.open()))
     out_rows = []
     today = str(date.today())
+    from_api = 0
+    from_ad_name = 0
     for e in evergreen:
         api = item_map.get(e["ad_id"], {})
-        item = api.get("tiktok_item_id", "")
+        item = (api.get("tiktok_item_id") or "").strip()
+        if item:
+            from_api += 1
+        else:
+            # Fallback: Internal creatives often encode the post id in the ad name.
+            for candidate in (e.get("ad_name") or "", api.get("ad_name_api") or ""):
+                item = extract_item_id_from_ad_name(candidate)
+                if item:
+                    from_ad_name += 1
+                    break
         m = master.get(item, {})
         if m.get("tiktok_link"):
             link = m["tiktok_link"]
@@ -255,6 +277,7 @@ def build_lookup(ads_csv: Path, master_csv: Path, item_map: dict[str, dict]) -> 
     linked = sum(1 for r in out_rows if r["tiktok_link"])
     unique = len({r["tiktok_link"] for r in out_rows if r["tiktok_link"]})
     print(f"Built lookup: {len(out_rows)} rows, {linked} with links, {unique} unique videos")
+    print(f"  → item_id from API: {from_api}; from ad_name fallback: {from_ad_name}")
     print(f"  → {out}")
     return out
 
@@ -386,96 +409,86 @@ def write_lookup_sheet(lookup_csv: Path) -> None:
 
 
 def wire_view_content_and_bts_tt_links(token: str | None = None) -> None:
-    """Add TT Link XLOOKUPs on View Content - Ads (col Q) and BTS ad-ID sections (col C)."""
+    """Add TT Link XLOOKUPs on View Content - Ads and BTS ad-ID sections.
+
+    View Content - Ads:
+      B = Ad ID (FILTER spill), C = Ad Name (XLOOKUP), Q = TT Link (XLOOKUP)
+      Do not put ISNUMBER(VALUE(...)) gates — they break large TikTok ad ids.
+
+    BTS `26 - Full Funnel:
+      Ad ID spills in col C; TT Link in col D. Do not write into col C.
+    """
     token = token or sheets_token()
     lookup = LOOKUP_TAB
 
-    # --- View Content - Ads: header row 8, Ad ID in col B, TT Link in col Q ---
+    # --- View Content - Ads: Ad Name in C, TT Link in Q ---
     vc_title = "View Content - Ads"
-    vc = sheets_http(
-        "GET",
+    c_formulas = [
+        [
+            f'=IF(B{r}="","",IFERROR(XLOOKUP(B{r}&\"\",\'{lookup}\'!$A:$A,'
+            f'\'{lookup}\'!$C:$C,\"\"),\"\"))'
+        ]
+        for r in range(10, 61)
+    ]
+    q_formulas = [
+        [
+            f'=IF(B{r}="","",IFERROR(XLOOKUP(B{r}&\"\",\'{lookup}\'!$A:$A,'
+            f'\'{lookup}\'!$J:$J,\"\"),\"\"))'
+        ]
+        for r in range(9, 61)
+    ]
+    sheets_http(
+        "PUT",
         f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values/"
-        + urllib.parse.quote(f"'{vc_title}'!B8:B80", safe=""),
+        + urllib.parse.quote(f"'{vc_title}'!C10", safe="")
+        + "?valueInputOption=USER_ENTERED",
         token,
-    ).get("values") or []
-    # Row 8 is header; write TT Link header in Q8
+        {"values": c_formulas, "majorDimension": "ROWS"},
+    )
     sheets_http(
         "PUT",
         f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values/"
         + urllib.parse.quote(f"'{vc_title}'!Q8", safe="")
-        + "?valueInputOption=RAW",
+        + "?valueInputOption=USER_ENTERED",
         token,
-        {"values": [["TT Link"]], "majorDimension": "ROWS"},
+        {"values": [["TT Link"]] + q_formulas, "majorDimension": "ROWS"},
     )
-    q_formulas = []
-    for i, row in enumerate(vc):
-        sheet_row = 8 + i
-        ad = row[0].strip() if row else ""
-        if i == 0:
-            continue  # header already written
-        if ad.isdigit() and len(ad) >= 10:
-            q_formulas.append(
-                [
-                    f"=IFERROR(XLOOKUP(B{sheet_row}&\"\",'{lookup}'!$A:$A,'{lookup}'!$J:$J,\"\"),\"\")"
-                ]
-            )
-        else:
-            q_formulas.append([""])
-    if q_formulas:
-        sheets_http(
-            "PUT",
-            f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values/"
-            + urllib.parse.quote(f"'{vc_title}'!Q9", safe="")
-            + "?valueInputOption=USER_ENTERED",
-            token,
-            {"values": q_formulas, "majorDimension": "ROWS"},
-        )
-        print(f"  View Content - Ads: wrote TT Link formulas for {sum(1 for r in q_formulas if r[0])} ad rows")
+    print("  View Content - Ads: wrote Ad Name C10:C60 + TT Link Q8:Q60")
 
-    # --- BTS `26 - Full Funnel: scan col D for Ad ID headers / numeric ad ids ---
+    # --- BTS `26 - Full Funnel: Ad ID in C, TT Link in D ---
     bts_title = "BTS `26 - Full Funnel"
     bts = sheets_http(
         "GET",
         f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values/"
-        + urllib.parse.quote(f"'{bts_title}'!D1:D250", safe=""),
+        + urllib.parse.quote(f"'{bts_title}'!C1:D300", safe="")
+        + "?valueRenderOption=FORMULA",
         token,
     ).get("values") or []
-    updates = []  # list of (row, value) for col C
+    body_data = []
     for i, row in enumerate(bts):
         sheet_row = i + 1
-        val = row[0].strip() if row else ""
-        if val == "Ad ID":
-            updates.append((sheet_row, "TT Link"))
-        elif val.isdigit() and len(val) >= 10:
-            updates.append(
-                (
-                    sheet_row,
-                    f"=IFERROR(XLOOKUP(D{sheet_row}&\"\",'{lookup}'!$A:$A,'{lookup}'!$J:$J,\"\"),\"\")",
-                )
-            )
-    if updates:
-        # Write in contiguous chunks where possible
-        data = []
-        # Use batch update via individual ranges for simplicity
-        body_data = []
-        for sheet_row, value in updates:
+        c = (row[0] if row else "") or ""
+        d = (row[1] if len(row) > 1 else "") or ""
+        c_s = str(c).strip()
+        d_s = str(d).strip()
+        if c_s == "Ad ID" and d_s != "TT Link":
             body_data.append(
                 {
-                    "range": f"'{bts_title}'!C{sheet_row}",
+                    "range": f"'{bts_title}'!D{sheet_row}",
                     "majorDimension": "ROWS",
-                    "values": [[value]],
+                    "values": [["TT Link"]],
                 }
             )
+    if body_data:
         sheets_http(
             "POST",
             f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values:batchUpdate",
             token,
-            {
-                "valueInputOption": "USER_ENTERED",
-                "data": body_data,
-            },
+            {"valueInputOption": "USER_ENTERED", "data": body_data},
         )
-        print(f"  BTS Full Funnel: wrote {len(updates)} TT Link headers/formulas in col C")
+        print(f"  BTS Full Funnel: updated {len(body_data)} TT Link header(s) in col D")
+    else:
+        print("  BTS Full Funnel: TT Link col D headers OK")
 
 
 def main() -> int:

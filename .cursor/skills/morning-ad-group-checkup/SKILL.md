@@ -7,40 +7,63 @@ description: >
   stage (6-Second VTR for UF, PDP Rate for MF, ATC Rate for LF), using
   same-day TikTok metrics for the "yesterday" pulse and settled BigQuery site/revenue data for
   the 3-day-vs-14-day decay check AND sustained low absolute performance vs funnel peers.
-  Also flags broken-link / out-of-stock risk: a PDP-to-cart (VTC) rate drop at the ad group
-  level, or a specific ad inside a group getting clicks (healthy CTR) but no carts.
-  Not a creative rotation plan; flags creative follow-up for the
-  creative associate when decay looks creative-driven.
+  VTC (PDP→cart) is supporting-only: never 🔴 alone, never lead a Why line, never default
+  Do-next to "check product link/stock". Ad-level CTR/ATC gaps are optional sub-notes only.
+  Not a creative rotation plan; flags creative follow-up for the creative associate when decay
+  looks creative-driven.
+  Slack deliverable is a short top-10 flag list only — no Watch section, no long Do-next.
   Triggers: morning checkup, morning analysis, daily ad group review, which ad groups need
   attention, struggling ad groups, ad group health check, daily triage, what should I check
-  today, morning digest, PDP rate, ATC rate, 6 second VTR, broken link, out of stock, product
-  link check.
+  today, morning digest, PDP rate, ATC rate, 6 second VTR.
   ❌ Do NOT use for: weekly exec memos (use weekly-account-business-review); creative
   retire/scale/rotate plans (use creative-fatigue-rotation-planner); executing budget/bid/pause
   changes (use ad-group-optimizer or manage-campaign). This skill never writes.
-version: 2.7.0
+version: 2.12.0
 ---
 
 # Morning Ad Group Checkup (read-only)
 
-A **read-only** morning triage skill. It answers one question: **which ad groups need your
-attention today, and why?** — judged against the metric that actually matters for that ad
-group's funnel stage, not a generic CPA/CTR blend.
+A **read-only** morning triage skill. Product goal: a **quick flag of the top 10 ad groups to
+check today** — not a full account review, not a Watch list, not a long Do-next essay.
 
-**Four independent flag reasons** — an ad group can trip any combination; do not treat decay
-alone as sufficient:
-1. **Getting worse** (Signal A/B) — trend vs its own history or yesterday vs 7-day avg
-2. **Sitting low** (Signal C) — persistently weak vs **funnel peers**, even when flat (no decline)
-3. **Broken link / OOS risk** (Signal D) — PDP-to-cart (VTC) rate drops even though clicks and
-   PDP views look fine; classic signature of a link pointing at the wrong product or a product
-   going out of stock
-4. **Ad-level click/cart gap** (Signal E) — one specific ad inside an otherwise-normal ad group
-   is getting clicks (CTR is fine) but producing almost no carts — points at that ad's own
-   product link, not the ad group as a whole
+**Slack (Stage 7B) is the primary deliverable.** Keep it scannable:
+headline + pulse + numbered top 10 + link to LATEST.md. Everything else is optional archive detail.
+
+## ⛔ VTC / link-stock ban (read this first — enforced 2026-08-24)
+
+Today's Slack digest still led with `low-vtc` and "check product link/stock" on almost every
+row. That is a **failed run**. Before posting Slack or writing LATEST.md, apply this gate:
+
+**Illegal in 🔴 Check Today (must demote to 🟡 Watch or rewrite):**
+- Why line that **starts with** `low-vtc`, `vtc-decay`, or `ad-link-risk`
+- Why line whose **only** reason codes are VTC-related (`low-vtc` / `vtc-decay`)
+- Any 🔴 group that has **no** primary code from: `atc-decay`, `low-atc`, `pdp-decay`,
+  `low-pdp`, `vtr-decay`, `low-vtr`, `ctr-collapse`, `delivery-halt`
+  (plus Signal C 2/3+CTR escalator codes as defined below)
+
+**Also never flag on spend volume alone.** Low spend often means we **cut the budget on purpose**
+(confirmed 2026-08-24 on `Spark_Sideboard_Broad_LF`). Do not use `spend-drop` as a 🔴 or Slack Why.
+
+**Banned phrases unless BOTH primary ATC/PDP is soft AND VTC is soft on that same group:**
+- "check product link/stock"
+- "check this ad's product link/stock"
+- "check destination URL(s)" as the **first** Do-next action
+
+**If a draft violates the gate:** fix the buckets/Why/Do-next, then post. Do not ship the draft.
+
+**Primary flag reasons** (these drive 🔴 Check Today and must lead every Why line):
+1. **Getting worse** (Signal A/B) — trend vs its own history or yesterday vs 7-day avg on the
+   **funnel primary KPI** (UF=6s VTR, MF=PDP Rate, LF=ATC Rate) or TikTok delivery/CTR
+2. **Sitting low** (Signal C) — persistently weak vs **funnel peers** on that same primary KPI,
+   even when flat (no decline)
+
+**Supporting diagnostics** (never the headline; never enough for 🔴 alone):
+3. **VTC** (Signal D) — optional trailing clause only
+4. **Ad-level CTR/ATC gap** (Signal E) — optional indented sub-note only; no link/stock suffix
+   by default
 
 An ad group that has been bad for weeks and is *still* bad belongs on the list just as much as
-one that just fell off a cliff. And a group whose *overall* ATC rate looks fine can still be
-hiding one broken ad dragging down volume — Signal E exists to catch that case.
+one that just fell off a cliff.
 
 **Default account:** Wayfair US Search (`7125498373565726721`). Override only when the user
 names a different `advertiser_id`.
@@ -83,17 +106,13 @@ Stage 4 (BigQuery, settled data — drives the decay check only, NOT the same-da
   ⑥ Low funnel ad groups only → query tbl_fact_attributed_financials (click-date AENR) same windows
   ⑦ Tag each ad group's BigQuery join: id-matched / name-matched / no-match
 Stage 5: adgroup_get — status, budget, bid settings for flagged groups only
-Stage 6: score + classify ad groups → Check Today / Watch / Healthy (funnel-aware KPI;
-  Signals A/B/C/D — decay, yesterday anomaly, sustained low vs peers, AND VTC/link-risk drop.
-  VTC uses data already pulled in Stage 4 — no extra query.)
-Stage 6B (🔴 groups only): ad-level CTR/ATC gap check (Signal E) — pull ad-level TikTok CTR +
-  ad-level BigQuery ATC rate for each 🔴 group's top-spend ads, flag any single ad with healthy
-  clicks but near-zero carts
-Stage 7: render morning memo + prioritized check-up queue (table format, for LATEST.md only)
-Stage 7B: if posting to Slack, re-render using the laddered-bullet template — never the
-  Stage 7 table (Slack has no table support)
-Stage 8: archive the current LATEST.md into past-reports/, then save today's memo as the new
-  Documents/TikTok-Daily-Status/LATEST.md
+Stage 6: score → Check Today / Watch / Healthy on **primary** Signals A/B/C only.
+  Then mandatory post-classify scrub: demote any VTC-only 🔴 to 🟡.
+Stage 6B: Signal E only on remaining primary 🔴; ≤2 Slack sub-notes; no link/stock suffix.
+Stage 6C: Pre-publish validation (VTC ban checklist) — fail and rewrite before Slack/LATEST.md
+Stage 7: LATEST.md table format
+Stage 7B: Slack laddered bullets — never Stage 7 table
+Stage 8: archive LATEST.md → write new LATEST.md → commit/push in cloud
 ```
 
 ---
@@ -317,18 +336,19 @@ red-flag on Signal A at all — mark `low-confidence` and rely on Signal B only.
 CTR decay and AENR-click-date remain supplementary context shown alongside a flagged ad group,
 never a standalone trigger.
 
-### Signal B — yesterday vs 7-day average (TikTok-native, all funnels, also trend-gated)
+### Signal B — yesterday vs 7-day average (TikTok-native; no spend-drop flags)
 
-Same persistence principle applies here: a single bad day is `🟡 Watch` at most; **two
-consecutive days** (yesterday AND the day before) escalates to `🔴 Check Today`. The one exception
-is delivery halt, which is acute and real the moment it happens — no need to wait a second day.
+Same persistence principle: a single bad day is internal noise at most; **two consecutive days**
+(yesterday AND the day before) can escalate to 🔴 for **CTR collapse** only. Delivery halt is
+the one acute single-day exception.
 
 - **Delivery halt (immediate, single-day):** `operation_status = ENABLE` but yesterday spend = 0
-  while 7d avg > $50/day → straight to 🔴, no persistence check needed
-- **Spend drop:** yesterday spend `< 7d_avg_spend × 0.60` (≥40% below normal) **on both yesterday
-  and the day before** → 🔴; on yesterday only → 🟡
+  while 7d avg > $50/day → straight to 🔴 (true non-delivery, not a budget cut)
+- **Spend drop — DO NOT FLAG (removed 2026-08-24):** yesterday spend below 7d average is often an
+  **intentional budget cut**. Never promote to 🔴/🟡/Slack Why on spend volume alone. Account-level
+  spend vs 7d avg may still appear in the pulse line for context only.
 - **CTR collapse:** yesterday CTR `< 7d_avg_ctr × 0.70` with material spend, **on both yesterday
-  and the day before** → 🔴; on yesterday only → 🟡
+  and the day before** → 🔴; on yesterday only → ignore for Slack (do not render Watch)
 
 ### Signal C — sustained low absolute performance vs funnel peers (added 2026-08-10)
 
@@ -389,86 +409,27 @@ median, and how far below (e.g. "ATC 0.9% vs LF peer median 2.4% — 3/3 days be
 Signal C and Signal A are **independent** — an ad group can flag on decay only, low-only, or
 both. List all applicable reason codes in the Why column.
 
-### Signal D — VTC (PDP-to-cart) drop: broken link / OOS risk (added 2026-08-11)
+### Signal D — VTC (PDP-to-cart): trailing context only (hardened 2026-08-24)
 
-**Why this exists:** ATC Rate (Signal A/C) is `ATCs / visits` — it blends two separate steps:
-did the visitor reach a product page, and once there, did they add to cart. A wrong product
-link or an out-of-stock item breaks specifically the **second** step. The user confirmed this
-live: a bed ad group was linking to a **sofa** product page — visits and PDP views looked
-normal, but almost nobody carted once they landed, because the product shown wasn't what the ad
-promised. ATC Rate alone flags this eventually, but conflates it with a click-quality problem;
-VTC isolates it and names the likely cause directly.
+**Not a morning decision KPI.** Do not treat VTC like ATC/PDP/VTR.
 
-**Formula:** `VTC rate = ATCs / PDP_views` — for both Mid and Low funnel ad groups. **No new
-query needed** — the Stage 4 `tbl_dash_visits` pull already returns both `ATCs` and `PDP_views`
-per day; VTC is computed in memory from data you already have.
+**Bucket (absolute):**
+- VTC soft with **no** primary A/B/C 🔴 → **🟡 Watch only**. Remove from 🔴 if it slipped in.
+- VTC soft **and** primary 🔴 already → stay 🔴; append `; VTC also soft (x% vs …)` **after**
+  the primary Why. Never put VTC first.
 
-**Step 1 — decay vs own 14-day baseline** (same trend-persistence rule as Signal A): compare
-each of the 3 individual recent settled days' VTC rate to the 14-day baseline VTC rate.
+Thresholds unchanged (`× 0.75`, 3-of-3, `PDP_views ≥ 100`). Codes: `vtc-decay`, `low-vtc`.
 
-| Days below `baseline_vtc × 0.75` (of 3) | Verdict |
-|---|---|
-| 3 of 3 | Link/OOS risk confirmed — eligible for 🔴 Check Today |
-| 2 of 3 | Eligible for 🟡 Watch only |
-| 0–1 of 3 | No signal |
+**Copy ban:** do not write "check product link/stock" on a VTC hit by default.
 
-**Step 2 — sustained low vs funnel peers** (same pattern as Signal C): compute funnel peer
-median VTC rate (Mid + Low pooled, or per-funnel if the split matters — default to per-funnel to
-match Signal C). Flag `< funnel_peer_median_vtc × 0.75` on 3-of-3 recent settled days → eligible
-🔴; 2-of-3 → 🟡 only.
+### Signal E — ad-level CTR/ATC gap (optional sub-note; no link spam)
 
-**Data floor:** require baseline `PDP_views ≥ 100` to trust the ratio; below that, mark
-`low-confidence` and skip Signal D for that ad group (small-sample VTC swings wildly).
+Run Stage 6B only for groups already 🔴 from **A/B/C**. Same math as before (`clicks ≥ 30`,
+CTR ≥ group × 0.85, ATC < group × 0.50, top 3 by spend per group).
 
-**Reason codes:** `vtc-decay` (own-baseline drop), `low-vtc` (sustained low vs peers). Always
-show both the ad group's VTC rate and the comparison point when this fires (e.g. "VTC 4.1% vs
-14d baseline 11.3% — 3/3 days below; check product link/stock on the landing PDP").
-
-**This is a diagnostic pointer, not a creative call.** When Signal D fires, the recommended next
-step is always: open the ad group's destination URL(s) in Ads Manager and confirm the linked
-product still exists, matches the ad, and is in stock — the same playbook that fixed
-`Spark_Bed_Broad_LF` on 2026-08-07. Do not route this to the creative associate; it's a
-link/catalog issue, not a creative-fatigue one.
-
-### Signal E — ad-level CTR/ATC gap (added 2026-08-11)
-
-**Why this exists:** the user confirmed a second failure pattern: within one ad group, a
-**specific ad** can be pulling healthy clicks while its own landing product is broken or
-out-of-stock — high CTR (people are interested) paired with almost no carts from that ad
-specifically. Ad-group-level metrics can hide this if the group's other ads are performing
-normally and dilute the average. This signal drills one level down from ad group to individual
-ad, but **only for ad groups that already flagged 🔴** in Stages A–D — running this for every ad
-group in the account would multiply the number of TikTok/BigQuery calls and blow the 2-4 minute
-runtime target for limited extra signal (a healthy ad group's individual ads are rarely worth
-auditing one by one).
-
-**Stage 6B procedure (🔴 groups only, run after initial Stage 6 classification):**
-
-1. For each 🔴 ad group, pull ad-level TikTok data: `report_integrated_get`, `data_level:
-   AUCTION_AD`, `dimensions: ["ad_id"]`, `filtering: [{field_name: "adgroup_ids", filter_type:
-   "IN", filter_value: [adgroup_id]}]`, `metrics: ["spend","clicks","ctr","impressions","ad_name"]`,
-   over the same **recent 3 settled days** window (align with the BigQuery window below). Batch
-   multiple 🔴 ad groups into fewer calls with `adgroup_ids` IN-filter where the API allows it,
-   rather than one call per group.
-2. Pull ad-level BigQuery ATC data for the same 🔴 ad groups' ads: extend the standard
-   `tbl_dash_visits` query with the **ad_id** regex extraction (`r'[\?&]ad_id=([^&]*)'` — already
-   used in the AENR template in `references/data-model.md`), grouped by `ad_id` instead of
-   `adgroup_id`, same recent settled window. Compute `ad_atc_rate = ATCs / visits` per `ad_id`.
-3. Keep only ads with **material clicks** in the window (`clicks ≥ 30`) — thin-traffic ads are
-   too noisy to call out by name.
-4. Flag an ad when **both**: its CTR is at or above the ad group's own average CTR × 0.85 (it's
-   not a low-interest ad) **and** its ad-level ATC rate is below the ad group's overall ATC rate
-   × 0.50 (carting at less than half the group's normal rate). Cap to the **top 3 offending ads
-   per ad group** by spend to keep the memo readable.
-
-**Reason code:** `ad-link-risk`. Surface as a sub-line under the ad group's row in the 🔴 table
-(never its own top-level row) — e.g. "⚠️ ad-level: `{ad_name}` — CTR 2.1% (normal) but ATC rate
-0.3% vs group's 1.8% — check this ad's specific product link/stock."
-
-**Scope discipline:** Signal E never promotes a 🟡 or ✅ ad group to a different bucket by
-itself — it's a same-bucket diagnostic detail on an ad group that's already 🔴 for another
-reason. If a 🟡 or ✅ ad group's underlying ads look worth auditing, say so as a one-line note
-rather than running the full Stage 6B pull for it.
+**Slack:** at most **2** Signal E sub-lines in the **entire** message (highest spend). Format:
+`   ⚠️ ad: "{ad_name}" — CTR {x}% (ok) but ATC {y}% vs group {z}%`  
+**Never** append "check this ad's product link/stock".
 
 ### Confidence floor
 
@@ -480,153 +441,121 @@ on noise, and never let a `low-confidence` tag alone push a group into 🔴.
 
 | Bucket | Criteria |
 |---|---|
-| **🔴 Check Today** | Signal A decay on 3-of-3 recent days OR Signal B anomaly on 2-of-2 recent days OR Signal C sustained low on 3-of-3 recent days vs funnel peers OR Signal C 2-of-3 low + CTR double-weak escalator OR Signal D (VTC) decay/sustained-low on 3-of-3 recent days OR delivery halt; AND material yesterday spend or impressions |
-| **🟡 Watch** | Signal A decay on 2-of-3 days OR Signal B anomaly on yesterday only OR Signal C sustained low on 2-of-3 days vs funnel peers OR Signal D (VTC) decay/sustained-low on 2-of-3 days OR thin decay data OR `no-match` with CTR softening |
+| **🔴 Check Today** | Signal A on 3-of-3 **or** Signal B CTR-collapse on 2-of-2 **or** Signal C on 3-of-3 **or** Signal C 2-of-3 + CTR escalator **or** delivery halt; material impressions/volume as defined. **VTC never qualifies. Spend-drop never qualifies.** |
+| **🟡 Watch** | Weaker A/B/C persistence **or** VTC-only soft **or** thin/`no-match` softening |
 | **✅ Healthy** | No triggers; or below materiality floor |
 
-Signal E never changes a bucket — it only adds an ad-level sub-note to ad groups already 🔴 from
-Signals A–D (see Stage 6B above).
+**Post-classify scrub (mandatory):** walk every 🔴 row. If it has no primary code
+(`atc-decay`/`low-atc`/`pdp-decay`/`low-pdp`/`vtr-decay`/`low-vtr`/`ctr-collapse`/
+`delivery-halt`), **move it out of 🔴** even if VTC or spend-drop codes were attached.
 
-Tag each flagged group with **reason codes**: `vtr-decay` / `pdp-decay` / `atc-decay` /
-`low-vtr` / `low-pdp` / `low-atc` / `low-ctr` / `vtc-decay` / `low-vtc` / `ad-link-risk` /
-`spend-drop` / `delivery-halt` / `ctr-collapse` / `data-gap` / `low-confidence`.
+Tag reason codes as needed, but **Why-line order** is primary funnel → delivery/CTR → optional
+VTC last. **Spend needing attention** = yesterday spend on remaining 🔴 only.
 
-**Spend needing attention** = sum of yesterday spend on 🔴 Check Today groups.
+### Output length — top 10 (widened from top 5 on 2026-08-26)
 
-### Output length
+**Why this widened back up:** at 5 slots, a chronic ad group that's carrying a **mandated
+minimum-spend commitment** (e.g. `CLP`) — which will keep scoring red on this skill's KPIs
+structurally and can't just be cut — occupies a slot every single morning, crowding out room for
+genuinely new problems. The user confirmed: *"some are repeats so it doesn't really give me new
+action items... we have a min spend we need to hit on it."* Widening to 10 keeps **every**
+2026-08-24 quality gate below exactly as-is (VTC ban, no spend-drop flags, primary-code
+requirement) — only the **count** of rows shown changes.
 
-Render the 🔴 Check Today table sorted by yesterday spend, descending. Show the **top 10** rows;
-if more than 10 qualify, add a line: *"+{N} more 🔴 — full list available on request."* Never
-silently truncate without saying so.
+**Slack (Stage 7B) — ship only this:**
+- Headline (how many 🔴 total + $ on them yesterday) + one-line account pulse
+- Optional **one** campaign-cluster line if 3+ of the top 10 share a campaign
+- Numbered **top 10** 🔴 by yesterday spend — each: bold name, campaign, funnel, $, **one short
+  primary Why** (no VTC lead; no link/stock spam)
+- Closing line: `Full memo: LATEST.md`
+
+**Do not put in Slack:**
+- 🟡 Watch list (any length)
+- ✅ Healthy / skipped counts
+- Data-quality block
+- Assumptions & limits
+- Multi-item Do next
+- Signal E ad sub-lines (keep those in LATEST.md only, if at all)
+- "+N more 🔴" padding beyond noting total count in the headline
+
+**LATEST.md (Stage 7)** may keep a slightly fuller table (top 10 + optional one-line "N more 🔴
+not listed") for history. Still **omit Watch** unless the user asked for it in that run.
+Watch stays an internal scoring bucket only — compute it if useful for scrubbing, but do not
+render it by default.
+
+Sort 🔴 by yesterday spend descending; Slack and the LATEST.md main list both stop at **10**.
 
 ### Campaign clustering check
 
-Before rendering, group the 🔴 (and 🟡) list by `campaign_name`. If **3 or more flagged ad groups
-share one campaign**, don't present them as N independent problems — add a one-line callout above
-the table: *"{N} of today's flags are on {campaign_name} — likely one shared cause (creative,
-landing page, or a campaign-level setting change), not {N} separate issues."* This was confirmed
-live on 2026-08-07: 8 of 9 confirmed 🔴 groups shared the `Evergreen VSA Broad Web LF/FF` campaign
-pair, which is a materially different story than 9 scattered problems.
+If **3+ of the top 10** share one `campaign_name`, add **one** short callout above the list.
+Do not narrate every cluster in the account.
+
+### Pre-publish validation (mandatory before Slack + LATEST.md)
+
+Any failure → fix before sending:
+1. Slack has **exactly ≤10** numbered 🔴 items (or fewer if fewer qualify)
+2. Slack has **no** Watch section
+3. Zero 🔴 Why lines start with `low-vtc` / `vtc-decay` / `ad-link-risk`
+4. Zero 🔴 rows are VTC-only (no primary code)
+5. "check product link/stock" appears **0 times** in Slack
+6. Slack body is short (~45 lines or fewer — roughly double the old 25-line budget since the
+   list doubled from 5 to 10 rows)
+7. No `spend-drop` / "spend <$X of 7d" Why lines — budget cuts are not flags
 
 ## STAGE 7 — Render morning memo (for `LATEST.md` only — never send this table to Slack)
 
-**This table format is for the saved file only.** GitHub/markdown viewers render `|` tables
-correctly; Slack does not — it prints the raw pipe characters as text. **When the destination is
-Slack, use STAGE 7B instead, not this template.**
+**Archive / repo file only.** Slack uses STAGE 7B. Keep LATEST.md useful but still short.
 
 ```
 ☀️ Morning Ad Group Checkup — {advertiser_name} ({advertiser_id}) · {currency}
 {today's date} · Yesterday = {yesterday} · BigQuery settled through {d-2}
 
-HEADLINE: {1 sentence — e.g. "3 ad groups need a check today; $X spent there yesterday."}
+HEADLINE: {N} ad groups flagged; showing top 10 by spend (${spend_on_top10} of ${spend_all_red} on all 🔴).
 
-Account pulse (yesterday vs 7-day daily avg, TikTok-native)
-  Spend        {y}     vs avg {avg}     {▲/▼ X%}
-  CTR          …
-  By funnel: Upper {n} groups · Mid {n} groups · Low {n} groups ({n} excluded: LEAD_GENERATION)
+Account pulse: spend {y} vs 7d avg {avg} ({▲/▼X%}) · CTR {y}% vs 7d {avg}% ({▲/▼X%})
 
-🔴 Check today ({N} ad groups, showing top 10 by spend)
-  | Ad group | Campaign | Funnel | Why | Yesterday spend |
-  |---|---|---|---|---|
-  | …
-  {if N > 10: "+{N-10} more 🔴 — full list available on request."}
-  {for each 🔴 group with a Signal E hit: "⚠️ ad-level: {ad_name} — CTR {x}% (normal) but ATC
-  rate {y}% vs group's {z}% — check this ad's product link/stock."}
+{optional one cluster line if 3+ of top 10 share a campaign}
 
-🟡 Watch ({N}) — condensed; ad group names + reason codes only unless asked for detail
+Top 10 to check today
+  | # | Ad group | Campaign | Funnel | Why (primary KPI) | Yday spend |
+  |---|---|---|---|---|---|
+  | 1–10 … |
 
-✅ Healthy / skipped ({M} below floor or no triggers)
+{if N > 10: "+{N-10} more 🔴 not listed — ask if you want the rest."}
 
-Spend on 🔴 groups yesterday: ${spend_needing_attention}
-
-Data quality
-  · BigQuery join: {X} id-matched · {Y} name-matched · {Z} no-match (TikTok-only fallback used)
-  · If Z is large, flag it plainly — UTM tagging gaps mean some ad groups can't be judged on
-    PDP/ATC rate yet.
-
-Notes for creative associate (if any)
-  · {ad group} — possible creative-driven decay; not a rotation plan.
-
-Assumptions & limits
-  · TikTok windows same-day fresh; BigQuery windows settled through {d-2} (revenue/visits lag).
-  · Funnel-aware KPIs: UF=6s VTR, MF=PDP Rate, LF=ATC Rate. LEAD_GENERATION campaigns excluded.
-  · Flags fire on **decay** (vs own baseline), **yesterday anomaly**, **sustained low vs funnel
-    peers**, or a **PDP-to-cart (VTC) drop** — not decay alone.
-  · Low-volume / no-match groups marked low-confidence; paywalled metrics show n/a.
-  · Signal E (ad-level CTR/ATC gap) only runs on 🔴 groups — a healthy-looking ad group could
-    still hide one broken ad if its group-level averages never dipped below Signal A/C/D
-    thresholds; ask for a manual ad-level check on any specific group if unsure.
-  · This skill changes nothing in Ads Manager or BigQuery.
-
-Do next (prioritized)
-  1. [Today] Open 🔴 #1 in Ads Manager → check delivery, budget, bid, targeting
-  2. …
-  · `vtc-decay` / `low-vtc` / `ad-link-risk` groups → check the destination URL(s) first (product
-    still exists, matches the ad, in stock) before touching budget, bid, or creative — same
-    playbook that fixed Spark_Bed_Broad_LF on 2026-08-07
-  · Budget/bid changes → ad-group-optimizer
-  · Delivery/rejection issues → diagnose-campaign-health
-  · Creative refresh → creative associate (creative-fatigue-rotation-planner for their workflow)
+Join quality: {X} id-matched · {Y} name-matched · {Z} no-match
 ```
 
-If every bucket is empty, say so honestly and still show account pulse + skipped counts.
+No Watch section. No Do-next essay. No Signal E block unless a top-10 group has a glaring
+ad-level ATC gap — then at most one ⚠️ line under that row.
 
-## STAGE 7B — Slack-safe render (separate template — no tables, ever)
+## STAGE 7B — Slack (primary deliverable — keep it short)
 
-**Why this exists:** Slack has no markdown table support. Sending Stage 7's `| Ad group |
-Campaign | … |` table to Slack produces literal pipe characters as a wall of text, not columns
-— confirmed live 2026-08-12, where the LATEST.md table was pasted verbatim into a Slack message
-and came out unreadable. **Whenever the destination is Slack (a channel or a DM), use this
-laddered-bullet template instead. Never use the Stage 7 table in a Slack message, under any
-circumstance.**
+**Purpose:** flag the **top 10** ad groups to open today. Not a Watch digest.
 
-Use Slack's own text style (called "mrkdwn") only: `*bold*`, `_italic_`, `` `inline code` ``, and
-plain `-` or numbered lines for lists. No `|` characters as table syntax, no HTML.
+No markdown tables. Slack mrkdwn only: `*bold*`, plain numbered lists. Never wrap in \`\`\`.
 
 ```
-☀️ *Morning Ad Group Checkup — {advertiser_name}* · {today's date}
+☀️ *Morning checkup* · {date}
 
-*{N} ad groups need a check today* · ${spend_needing_attention} spent there yesterday
+*{N} flagged* · top 10 below (${spend_on_top10} yday) · account spend {y} vs 7d {avg} ({▲/▼X%})
 
-Account pulse: spend {y} vs 7d avg {avg} ({▲/▼X%}) · CTR {y}% vs 7d avg {avg}% ({▲/▼X%})
+{optional one line: "3 of top 10 are on {campaign} — likely shared cause."}
 
-{one line per cluster, only if Stage 6's campaign-clustering check fired — e.g. "4 flags cluster
-on Evergreen VSA Broad Web LF — likely one shared cause, not 4 separate issues."}
-
-*🔴 Check today* (top 10 by spend)
 1. *{ad_group}* — {campaign} · {funnel} · ${spend}
-   {reason codes / why, one short clause}
-   {one sub-line per Signal E hit on this group: "   ⚠️ ad: “{ad_name}” — CTR {x}% (normal) but
-   ATC {y}% vs group {z}% — check this ad's product link/stock."}
+   {one short primary Why — ATC/PDP/6s VTR/CTR/delivery-halt only; never spend-drop}
 2. *{ad_group}* — …
 …
-{if N > 10: "+{N-10} more 🔴 — full list in LATEST.md"}
+10. *{ad_group}* — …
 
-*🟡 Watch* ({N}): {ad_group} ({reason}, ${spend}), {ad_group} ({reason}, ${spend}), … — one
-flowing comma-separated line (or two, if long), never a numbered list or table
-
-*Do next*
-1. {action}
-2. {action}
-…
-
-Full memo saved to LATEST.md in repo.
+Full memo: LATEST.md
 ```
 
-**Formatting rules — follow exactly:**
-- 🔴 groups are a **numbered list**, one ad group per number — never a table row.
-- Signal E ad-level flags are **sub-lines indented with 3 spaces + ⚠️**, sitting directly under
-  their ad group's number — never their own numbered item, never promoted to the main list.
-- 🟡 Watch is **one condensed, comma-separated line** (or two if the list is long) — not a
-  numbered list, not a table.
-- Keep the whole message to roughly **40 lines or fewer**. If the 🔴 list alone would exceed that,
-  cut to the top 6-8 by spend and lean harder on the "+{N} more — full list in LATEST.md" line
-  rather than trying to fit everything.
-- **Never wrap the message (or the 🔴 list) in a triple-backtick code block** to try to preserve
-  table alignment — that was tried and still rendered badly at this row count. If any field needs
-  monospacing, use inline `` `code` `` on that one field only, not the whole message.
-- If unsure whether a given post target is Slack, default to this template (STAGE 7B) — it also
-  reads fine pasted into chat, unlike the table.
+**Hard rules for Slack:**
+- **Max 10** numbered items. If fewer than 10 qualify, show fewer — do not pad.
+- **No** 🟡 Watch. **No** Do next. **No** Signal E sub-lines. **No** link/stock copy.
+- Why = one short clause led by primary KPI. No VTC lead. **No spend-drop.** Prefer omit VTC.
+- Run Pre-publish validation before send.
 
 ## STAGE 8 — Save the report (LATEST.md + archive)
 
