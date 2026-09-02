@@ -1,6 +1,7 @@
 # Data model — morning-ad-group-checkup
 
-This is the full contract behind `SKILL.md`: exact tables, join keys, funnel map, and SQL
+**Scoring thresholds** (decay / below-peers / floors) live in `scoring.md`. This file is the
+data contract: exact tables, join keys, funnel map, and SQL
 templates. Reverse-engineered from the live BigQuery Data Connector definitions embedded in the
 **TikTok Performance Tracker** Google Sheet (`1xou5AnzYbB_BozV46KP0FJjlVF0XozI4AhWKtFEjEeI`),
 which refreshes daily at 8am ET from 4 BigQuery sources. Confirmed with the account owner on

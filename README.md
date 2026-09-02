@@ -20,7 +20,10 @@ Each morning, open a chat in Cursor (any chat — doesn't have to be this one) a
 > **Morning ad group checkup**
 
 Takes about 2–4 minutes (it checks day-by-day trends, not just yesterday, to avoid flagging
-normal noise). When it's done you'll get the memo in chat, and `LATEST.md` will be updated —
+normal noise). Slack is the short top-10 list. If an ad group is on but yesterday spend is far
+below its daily budget, the same Slack adds a **Delivery FLAG** note — not a second job.
+
+When it's done you'll get the memo in chat, and `LATEST.md` will be updated —
 yesterday's version automatically slides into `past-reports/` first, so nothing is lost.
 
 ## Catching up on history
@@ -33,5 +36,6 @@ that directly, no need to read them all yourself.
 
 ## Related
 
-- Skill definition: `~/.cursor/skills/morning-ad-group-checkup/SKILL.md`
-- Data model / SQL reference: `~/.cursor/skills/morning-ad-group-checkup/references/data-model.md`
+- Skill definition (this folder): `.cursor/skills/morning-ad-group-checkup/SKILL.md`
+- Scoring thresholds: `.cursor/skills/morning-ad-group-checkup/references/scoring.md`
+- Data model / SQL: `.cursor/skills/morning-ad-group-checkup/references/data-model.md`
