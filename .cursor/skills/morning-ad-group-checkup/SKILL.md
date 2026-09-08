@@ -9,7 +9,7 @@ description: >
   Triggers: morning checkup, daily ad group review, which ad groups need attention, struggling
   ad groups, morning digest.
   ❌ Not for: weekly WBR, creative rotation plans, executing budget/bid/pause changes.
-version: 3.0.0
+version: 3.0.1
 ---
 
 # Morning Ad Group Checkup (read-only)
@@ -37,6 +37,7 @@ An ad group qualifies for the list if **either**:
 - **No spend-drop vs 7d** as a Why (intentional budget cuts)
 - **No VTC-led Why** (VTC is not a list reason)
 - **No custom Python scoring engine** — apply `scoring.md` to MCP/query results in-context
+- **No Delivery FLAG on Paused / Ended / DISABLE** groups or $0-budget groups (not a spend bug)
 - Read-only: never pause ads, change budgets, or run non-`SELECT` SQL
 
 ## Stages (keep it linear)
@@ -49,7 +50,8 @@ An ad group qualifies for the list if **either**:
    Drop LEAD_GENERATION. Bulk campaign_get + adgroup_get once each.
 4  BigQuery Mid/Low: daily PDP/ATC for 3 settled days + 14d baseline (SQL in data-model.md)
 5  Score with scoring.md → 🔴 list (decay OR below-peers OR delivery-halt / CTR-collapse)
-5B Optional: delivery fill vs daily budget → FLAG rows only (not part of top 10 Why)
+5B Optional: delivery fill vs daily budget → FLAG rows only (ENABLE + budget > $0;
+   skip Paused / Ended / DISABLE — see scoring.md)
 6  Sort 🔴 by yesterday spend → take top 10
 7  Slack (Stage 7B) first, then short LATEST.md archive
 8  Archive old LATEST.md → write new → commit/push (prefer main; say so in Slack if push fails)
@@ -103,4 +105,5 @@ No Watch. No Do-next. No ad-level block.
 1. ≤10 Slack items  
 2. No Watch / Do-next / ad-level / VTC-led Why / spend-drop Why / pipe tables  
 3. Every listed group has a real decay **or** below-peers (or CTR / delivery-halt) reason  
-4. Message is scannable (~45 lines or fewer)
+4. Message is scannable (~45 lines or fewer)  
+5. Delivery FLAG rows are only ENABLE groups with daily budget &gt; $0 that should be delivering

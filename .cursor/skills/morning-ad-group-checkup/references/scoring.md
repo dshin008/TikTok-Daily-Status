@@ -86,10 +86,41 @@ Stops “everyone is bad so peer median collapses” from hiding chronic underpe
 
 ## Delivery fill (optional Slack block, not a list Why)
 
-Fill = yesterday spend ÷ **daily** budget (if ad group budget is 0, use campaign daily budget).
+**Only groups that should be delivering.** If Ads Manager shows **Paused** or **Ended**, or
+yesterday spend is $0 because the group is off — **skip**. A $0 budget on a paused/ended group
+is expected, not a launch bug.
 
-Slack **Delivery FLAG** only when: fill **&lt; 50%**, or $0 spend with budget ≥ **$50**.  
-Do not Slack 50–79% or Under review. Does **not** count toward the top 10.
+### Eligibility (check before fill math)
+
+Include **only** when **all** are true:
+
+| Gate | Rule |
+|---|---|
+| Ad group on | `operation_status = ENABLE` |
+| Campaign on | parent campaign `operation_status = ENABLE` |
+| Not paused/ended | `secondary_status` is **not** `ADGROUP_STATUS_DISABLE`, `ADGROUP_STATUS_CAMPAIGN_DISABLE`, or `ADGROUP_STATUS_RF_TIME_DONE` |
+| Has a budget | resolved daily budget **> $0** (see below) |
+
+**Skip entirely** (never Delivery FLAG) when `operation_status = DISABLE`, Ads Manager status
+is **Paused** or **Ended**, or resolved daily budget is **$0**. Do not infer a budget for
+off groups.
+
+Use `secondary_status` from Stage 3 `adgroup_get` — do **not** request `primary_status`
+(TikTok returns 40002). Full status map → `adgroup-delivery-watch` skill.
+
+**In-scope delivery states** (when ENABLE + budget > 0): Active
+(`ADGROUP_STATUS_DELIVERY_OK`), Partial delivery (`ADGROUP_STATUS_REVIEW_PARTIALLY_APPROVED`),
+Under review (`ADGROUP_STATUS_AUDIT`, `ADGROUP_STATUS_REAUDIT`). Under review may show $0
+until approved — do not FLAG those as underspend.
+
+### Fill math (eligible groups only)
+
+Fill = yesterday spend ÷ **daily** budget. If ad group `budget` is 0, use campaign daily budget
+(CBO). If both resolve to $0 → **skip** (not eligible).
+
+Slack **Delivery FLAG** only when eligible **and**: fill **&lt; 50%**, or fill **&lt; 20%**, or
+$0 spend with budget ≥ **$50**. Do not Slack 50–79% or Under review. Does **not** count toward
+the top 10.
 
 ## Why-line format
 
